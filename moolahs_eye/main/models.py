@@ -3,39 +3,20 @@ from typing import Union
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from exceptions import model_exceptions as mdlexc
+from .exceptions import model_exceptions as mdlexc
 
 class Budget(models.Model):
-
     # options for frequency field
     frequencies = (
         (7, "weekly"),
         (30, "monthly")
     )
-    name = models.CharField(max_length=40, default="New Budget", null=False, blank=False)
+    name = models.CharField(max_length=40, default="New Budget", null=False, blank=False, unique=True)
     amount = models.FloatField(default=0.0, null=False, blank=False)
     frequency = models.IntegerField(null=False, default=7, choices=frequencies)
 
     def __str__(self):
         return self.name
-
-    def get_frequency(self, str_rep: True) -> Union[int, str]:
-        """returns the Budget objects frequency.
-
-        if str_rep == True:
-            frequency is returned as str representation
-        else:
-            frequency is returned as int representation"""
-        try:
-            for freq in Budget.frequencies:
-                if self.frequency in freq:
-                    if str_rep:
-                        return freq[1]
-                    else:
-                        return freq[0]
-        except:
-            pass
-
 
     def __is_frequency_valid(self) -> bool:
         """returns whether objects frequency field is valid.
@@ -46,45 +27,23 @@ class Budget(models.Model):
                     return True
             return False
         except:
-            pass
+            return False
 
     def __is_amount_sufficient(self) -> bool:
-        """returns whether the Budget objects amount is sufficient.
+        """returns whether the Budget object's amount is sufficient.
         The amount is sufficient if it is greater than or equal to
         the sum of all items costs within the budget."""
         try:
-            items_total = sum([i.cost for i in self.item_set.all()])
-            return self.amount >= items_total
+            return self.get_daily_amount() >= self.get_total_daily_item_costs()
         except:
-            pass
+            return False
 
-    def save(self, *args, **kwargs):
-        # validate frequency
-        if not self.__is_frequency_valid():
-            raise mdlexc.FrequencyException()
-        else:
-            self.frequency = self.get_frequency(str_rep=False)
-        #validate amount
-        if not self.__is_amount_sufficient(self):
-            raise mdlexc.InsufficientAmountException()
-        super(Budget, self).save(*args, **kwargs)
-
-    
-class Item(models.Model):
-    # options for frequency field
-    frequencies = (
-        (1, "daily"),
-        (7, "weekly"),
-        (30, "daily")
-    )
-
-    budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE)
-    name = models.CharField(max_length=40, default="New Item", null=False, blank=False)
-    amount = models.FloatField(default=0.0, null=False, blank=False)
-    frequency = models.IntegerField(null=False, default=7, choices=frequencies)
-
-    def __str__(self):
-        return self.name
+    def __is_amount_positive(self) -> bool:
+        """Returns True if amount is 0 or greater, else False."""
+        try:
+            return self.amount >= 0
+        except:
+            return False
 
     def get_frequency(self, str_rep: True) -> Union[int, str]:
         """returns the Budget objects frequency.
@@ -103,27 +62,141 @@ class Item(models.Model):
         except:
             pass
 
-    def __is_frequency_valid(self) -> bool:
+    def get_daily_amount(self) -> float:
+        """returns a given Budgets daily amount."""
+        try:
+            return self.amount / self.frequency
+        except:
+            return 0
+            
+    def get_total_daily_item_costs(self) -> float:
+        """returns the total combined total of the daily costs of the items."""
+        try:
+            return sum([i.get_daily_cost() for i in self.item_set.all()])
+        except:
+            return 0
+
+
+    def save(self, *args, **kwargs):
+        # ensure amount is positive
+        if not self.__is_amount_positive():
+            raise mdlexc.NegativeValueException("Budget Amount can not be negative.")
+
+        # validate frequency
+        if not self.__is_frequency_valid():
+            raise mdlexc.InvalidFrequencyException()
+        
+        # set frequency to int representation.
+        self.frequency = self.get_frequency(str_rep=False)
+
+        # validate amount if primary key generated (object has been instantiated)
+        if self.pk:
+            if not self.__is_amount_sufficient():
+                raise mdlexc.InsufficientBudgetAmountException()
+        super(Budget, self).save(*args, **kwargs)
+
+    
+class Item(models.Model):
+    # options for frequency field
+    frequencies = (
+        (1, "daily"),
+        (7, "weekly"),
+        (30, "monthly")
+    )
+
+    budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE)
+    name = models.CharField(max_length=40, default="New Item", null=False, blank=False)
+    cost = models.FloatField(default=0.0, null=False, blank=False)
+    frequency = models.IntegerField(null=False, default=7, choices=frequencies)
+
+    def __str__(self):
+        return self.name
+
+    def __is_frequency_value_valid(self) -> bool:
         """returns whether objects frequency field is valid.
         Value is valid if present in frequencies and does not exceed 
         budgets frequency."""
         try:
-            for freq in Budget.frequencies:
+            for freq in Item.frequencies:
                 if self.frequency in freq:
-                    return self.budget_id.frequency >= self.frequency
+                    return True
+        except:
+            pass
+        finally:
             return False
+
+    def __is_frequency_value_exceeding(self) -> bool:
+        """Returns True if item frequency exceeds budget frequency, else False."""
+        try:
+            return self.frequency > self.budget_id.frequency
+        except:
+            return False
+    
+    def __is_item_cost_permissible(self) -> bool:
+        """Returns True if cost is permissible, else False.
+        
+        cost is permissible if it doesn't cause the total cost
+        of all items to exceed the budget's amount."""
+        try:
+            other_items = self.budget_id.item_set.exclude(id=self.id)
+            costs = sum([i.get_daily_cost() for i in other_items])
+            return (self.get_daily_cost() + costs) <= self.budget_id.get_daily_amount()
+        except:
+            return False
+
+    def __is_cost_positive(self) -> bool:
+        """Returns True if cost is 0 or greater, else False."""
+        try:
+            return self.cost >= 0
+        except:
+            return False
+
+    def get_frequency(self, str_rep: True) -> Union[int, str]:
+        """returns the Budget objects frequency.
+
+        if str_rep == True:
+            frequency is returned as str representation
+        else:
+            frequency is returned as int representation"""
+        try:
+            for freq in Item.frequencies:
+                if self.frequency in freq:
+                    if str_rep:
+                        return freq[1]
+                    else:
+                        return freq[0]
         except:
             pass
 
+    def get_daily_cost(self) -> float:
+        """returns the daily cost of a given item (amount / frequency)"""
+        try:
+            return self.cost / self.frequency
+        except:
+            return 0
 
     def save(self, *args, **kwargs):
-        if not self.__is_frequency_valid():
-            mdlexc.FrequencyException()
+        # ensure cost is positive
+        if not self.__is_cost_positive():
+            raise mdlexc.NegativeValueException("Item costs can not be negative.")
+
+        # validate frequency value
+        if not self.__is_frequency_value_valid():
+            raise mdlexc.InvalidFrequencyException()
+
+        # set frequency to int representation 
+        self.frequency = self.get_frequency(str_rep=False)
+
+        # ensure frequency of item doesn't exceed budget frequency
+        if self.__is_frequency_value_exceeding():
+            raise mdlexc.FrequencyExceedanceException()
+
+        # ensure cost is permissible
+        if self.__is_item_cost_permissible():
+            super(Item, self).save(*args, **kwargs)
+            self.budget_id.save()    
         else:
-            self.frequency = self.get_frequency(str_rep=False)
-        super(Item, self).save(*args, **kwargs)
-        # performs additional validation relating to the amount
-        self.budget_id.save()
+            raise mdlexc.ImpermissibleItemCostException()
 
 
 class CustomAccountManager(BaseUserManager):

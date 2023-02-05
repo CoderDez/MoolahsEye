@@ -1,8 +1,19 @@
-class FrequencyException(Exception):
+class InvalidFrequencyException(Exception):
     def __str__(self):
         return "Value for frequency is invalid."
 
-
-class InsufficientAmountException(Exception):
+class FrequencyExceedanceException(Exception):
     def __str__(self):
-        return "The Budgets amount is not sufficient."
+        return "Item frequency can not exceed Budget frequency."
+
+class InsufficientBudgetAmountException(Exception):
+    def __str__(self):
+        return "The Budgets amount is not sufficient to handle the cost of all its items."
+
+class NegativeValueException(Exception):
+    def __str__(self):
+        return "Negative value is not permitted."
+
+class ImpermissibleItemCostException(Exception):
+    def __str__(self):
+        return "The Item's cost has caused Budget's costs to exceed its amount."
