@@ -17,3 +17,7 @@ class NegativeValueException(Exception):
 class ImpermissibleItemCostException(Exception):
     def __str__(self):
         return "The Item's cost has caused Budget's costs to exceed its amount."
+    
+class UniqueNameValueException(Exception):
+    def __str__(self):
+        return "The Item's name was not unique within its Budget item_set."

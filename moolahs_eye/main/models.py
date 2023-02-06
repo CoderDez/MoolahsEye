@@ -121,8 +121,6 @@ class Item(models.Model):
                 if self.frequency in freq:
                     return True
         except:
-            pass
-        finally:
             return False
 
     def __is_frequency_value_exceeding(self) -> bool:
@@ -175,7 +173,19 @@ class Item(models.Model):
         except:
             return 0
 
+    def __is_name_unique_in_set(self):
+        """Returns True if name of item is unique within the Budget's item_set"""
+        try:
+            items = self.budget_id.item_set.exclude(id=self.id).filter(name=self.name)
+            return len(items) == 0
+        except Exception as e:
+            print("what the fuck?...", e)
+            return False
+
     def save(self, *args, **kwargs):
+        # ensure name is unique
+        if not self.__is_name_unique_in_set():
+            raise mdlexc.UniqueNameValueException()
         # ensure cost is positive
         if not self.__is_cost_positive():
             raise mdlexc.NegativeValueException("Item costs can not be negative.")
