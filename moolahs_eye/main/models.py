@@ -16,7 +16,7 @@ class CustomAccountManager(BaseUserManager):
 
         email = self.normalize_email(email)
         user = self.model(
-            email=email, name=name, user_name=user_name, **other_fields) 
+            email=email, name=name, user_name=user_name, password=password, **other_fields) 
 
         user.save()
         return user
@@ -45,12 +45,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     - REQUIRED_FIELDS: list
 
     methods:
-    - get_user(cls, email: str, password: str) -> User | None"""
+    - get_budgets(self) -> Queryset"""
 
     name = models.CharField(max_length=40, unique=True, null=False, blank=False)
     user_name = models.CharField(max_length=40, unique=True, null=False, blank=False)
     email = models.EmailField(null=False, blank=False, unique=True)
     password = models.CharField(max_length=150, null=False, blank=False)
+    instantiated = models.BooleanField(null=False, default=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     objects = CustomAccountManager()
@@ -62,22 +63,25 @@ class User(AbstractBaseUser, PermissionsMixin):
         
     def save(self, *args, **kwargs):
         validate_email(self.email)
-        if not ut.is_password_valid(self.password):
-            raise mdlexc.PasswordValueException()
+        if not self.instantiated:
+            print("users password: ", self.password)
+            if not ut.is_password_valid(self.password):
+                raise mdlexc.PasswordValueException()
+            else:
+                self.password = make_password(self.password)
+                self.instantiated = True
         super(User, self).save(*args, **kwargs)
 
-    @classmethod
-    def get_user(cls, email: str, password: str) -> Union[User, None]:
-        """returns a User object if both email and password match a User objects
-        credentials, else None."""
+    def get_budgets(self) -> models.QuerySet:
+        """returns all Budget objects associated with the user.
+        
+        Queryset is in alphabethical order."""
         try:
-            user = User.objects.get(email = email)
-            if check_password(password, user.password):
-                return user
-            else: 
-                return None
-        except:
-            return None
+            return self.budget_set.all().order_by(models.functions.Lower('name'))
+        except Exception as e:
+            print("bang: ", e)
+            return models.QuerySet()
+        
 
 class Budget(models.Model):
     # options for frequency field
@@ -85,7 +89,7 @@ class Budget(models.Model):
         (7, "weekly"),
         (30, "monthly")
     )
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
     name = models.CharField(max_length=40, default="New Budget", null=False, blank=False, unique=True)
     amount = models.FloatField(default=0.0, null=False, blank=False)
     frequency = models.IntegerField(null=False, default=7, choices=frequencies)
@@ -211,7 +215,7 @@ class Item(models.Model):
     name = models.CharField(max_length=40, default="New Item", null=False, blank=False)
     cost = models.FloatField(default=0.0, null=False, blank=False)
     frequency = models.IntegerField(null=False, default=7, choices=frequencies)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, default=None)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, default=None, null=True)
     def __str__(self):
         return self.name
 

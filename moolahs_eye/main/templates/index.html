@@ -1,12 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %} Home {% endblock %}
-
-{% load static %}
-{% block static_resources %}
-    <link rel="stylesheet" type="text/css" href="{% %}"/>
-{% endblock %}
-
 {% block content %}
     <!-- sidebar -->
     <div class="sidebar">
@@ -36,7 +29,7 @@
                     </div>
                     <ul class="menu">
                         {% for bud in budgets %}
-    ``                              {% if bud == budget %}
+    ``                      {% if bud == budget %}
                                 <li class="active">{{bud.name}}</li>
                             {% else %}
                                 <li>{{bud.name}}</li>
@@ -67,7 +60,7 @@
                             <div class="caret"></div>
                         </div>
                         <ul class="menu scrollable">
-                            {% with budget_frequency as budget.get_frequency %}
+                            {% with budget_frequency=budget.get_frequency %}
                                 {% for bud_freq in budget_frequencies %}
                                     {% if bud_freq == budget_frequency %}
                                         <li class="active">{{bud_freq}}</li>
@@ -75,7 +68,7 @@
                                         <li>{{bud_freq}}</li>
                                     {% endif %}
                                 {% endfor %}
-                            [% endwith %]
+                            {% endwith %}
                         </ul>
                     </div>
                 </form>
@@ -90,9 +83,10 @@
         <button id="sidebar-toggler"></button>
     </div>
     <!-- content-->
-    <div class="content">
-        {% block main_content %}
-
-        {% endblock %}
-    </div>
 {% endblock %}
+
+<div class="content">
+    {% block main_content %}
+
+    {% endblock %}
+</div>

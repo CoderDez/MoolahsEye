@@ -1,0 +1,97 @@
+{% extends 'index.html' %}
+
+{% block title %} Home {% endblock %}
+
+{% load static %}
+{% block static_resources %}
+    <link rel="stylesheet" type="text/css" href="{% static '/css/dropdown.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static '/css/reusable.css' %}"/>
+{% endblock %}
+
+{% load custom_filters %}
+{% block main_content %}
+    <div class="tools-container">
+        <!-- tool toggler -->
+        <div class="tool-toggler">
+            <div class="tool-buttons-container">
+                <button id="btn_toggle_calculator"></button>
+                <button id="btn_toggle_analysis"></button>
+            </div>
+        </div>
+        <!-- calculator -->
+        <div class="calculator-container">
+
+        </div>
+        <!-- analysis -->
+        <div class="analysis-container">
+
+        </div>
+    </div>
+    <div class="change-confirmer-buttons">
+        <button id="btn_confirm_item_changes"></button>
+        <button id="btn_cancel_item_changes"></button>
+    </div>
+    <!-- table -->
+    <table id="items_table">
+        <thead>
+            <tr>
+                <td>Name</td> <td>Cost</td> <td>Category</td> <td>Frequency</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% if budget %}
+                {% if budget.item_set.all|has_items %}
+                    {% for item in budget.item_set.all %}
+                        <!-- item name -->
+                        <td>
+                            <input type="text" class="item-name" name="name" value="{{item.name}}" disabled/>
+                        </td>
+                        <!-- item cost -->
+                        <td>
+                            <input type="number" class="item=cost" name="cost" value="{{item.cost}}" disabled/>
+                        </td>
+                        <!-- item category -->
+                        <td>
+                            <div class="dropdown">
+                                <div class="select">
+                                    <span class="selected">{{item.category}}</span>
+                                    <div class="caret"></div>
+                                </div>
+                                <ul class="menu">
+                                {% for category in categories %} 
+                                    {% if category == item.category %}
+                                        <li class="actuve">{{category}}</li>
+                                    {% else %}
+                                        <li>{{category}}</li>
+                                    {% endif %}
+                                {% endfor %}
+                                </ul>
+                            </div>
+                        </td>
+                        <!-- frequency -->
+                        <td>
+                            <!-- use with statement to avoid repetitive method call -->
+                            <div class="dropdown">
+                                <span class="selected">{{item.get_frequency}}</span>
+                                <div class="caret"></div>
+                            </div>
+                            <ul class="menu">
+                                {% with item_freq=item.get_frequency %}
+                                    {% for frequency in item_frequencies %}
+                                        {% if frequency == item_freq %}
+                                            <li class="active">{{frequency}}</li>
+                                        {% else %}
+                                            <li>{{frequency}}</li>
+                                        {% endif %}
+                                    {% endfor %}   
+                                {% endwith %}
+                            </ul>
+
+                        </td>
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
+        </tbody>
+    </table>
+    <button id="btn_new_item">New+</button>
+{% endblock %}
