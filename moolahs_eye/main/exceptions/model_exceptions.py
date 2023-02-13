@@ -21,3 +21,7 @@ class ImpermissibleItemCostException(Exception):
 class UniqueNameValueException(Exception):
     def __str__(self):
         return "The Item's name was not unique within its Budget item_set."
+    
+class PasswordValueException(Exception):
+    def __str__(self):
+        return """Invalid password value. \nPasswords must be between 8 and 20 characters long, contain both an upper and lower case character, and contain a digit."""

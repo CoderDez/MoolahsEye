@@ -1,0 +1,107 @@
+:root {
+
+}
+
+/* side bar */
+.sidebar {
+    width: 15%;
+}
+
+.sidebar * {
+    border: 1px solid black;
+}
+
+.sidebar > header {
+    display: flex;
+    justify-content: flex-start;
+}
+
+#logo {
+
+}
+
+.budget-chooser {
+    display: flex;
+}
+
+.budget-chooser .dropdown {
+
+}
+
+.btn-new-budget {
+
+}
+
+.notice {
+
+}
+
+.budget-details {
+    display: flex;
+}
+
+.budget-details form {
+
+}
+
+.budget-details form fieldset {
+
+}
+
+#budget_submit_button {
+
+}
+
+.budget-details form .dropdown {
+    
+}
+
+.budget-buttons button {
+    
+}
+
+#siderbar-toggler {
+
+}
+
+
+/* content */
+.content {
+
+}
+
+.tools-container {
+
+}
+
+/* tool toggler */
+.tool-toggler {
+
+}
+
+.tool-buttons-container {
+
+}
+
+.tool-buttons-container button {
+
+}
+
+/* calculator container */
+.calculator-container {
+
+}
+
+.analysis-container {
+
+}
+
+/* table */
+.change-confirmer-buttons {
+
+}
+
+.items-table {
+    
+}
+

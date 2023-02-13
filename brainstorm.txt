@@ -1,0 +1,2 @@
+I need some way of associating a budget with a user
+I need to change the logic of code so a user only has access to budgets it has permission for

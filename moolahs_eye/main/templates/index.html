@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %} Home {% endblock %}
+
+{% load static %}
+{% block static_resources %}
+    <link rel="stylesheet" type="text/css" href="{% %}"/>
+{% endblock %}
+
+{% block content %}
+    <!-- sidebar -->
+    <div class="sidebar">
+        <!-- header -->
+        <header>
+            <div class="dropdown">
+                <div class="select">
+                    <span class="selected">{{user}}</span>
+                    <div class="caret"></div>
+                </div>
+                <ul class="menu scrollable">
+                    <li>
+                        <a href="">Logout</a>
+                    </li>
+                </ul> 
+            </div>         
+            <img id="logo" alt="Moolah's Eye Logo" src=""/>
+        </header>
+        <!-- budget chooser -->
+        <div class="budget-chooser">
+            <!-- custom dropdown goes here -->
+            {% if budget %}
+                <div class="dropdown">
+                    <div class="select">
+                        <span class="selected">{{budget.name}}</span>
+                        <div class="caret"></div>
+                    </div>
+                    <ul class="menu">
+                        {% for bud in budgets %}
+    ``                              {% if bud == budget %}
+                                <li class="active">{{bud.name}}</li>
+                            {% else %}
+                                <li>{{bud.name}}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <button class="btn-new-budget">New+</button>
+        </div>
+        <p class="notice"></p> <!-- notifies user of what has transpired -->
+        <!-- budget details -->
+        <div class="budget-details">
+            {% if budget %}
+                <!-- form -->
+                <form action="#" method="post">
+                    <fieldset>
+                        <input id="budget_name" type="text" name="budget_name" value="{{budget.name}}" disabled/>
+                        <input id="budget_amount" type="number" name="budget_amount" value="{{budget.amount}}" disabled/>
+                        <input id="budget_frequency" class="hider" type="text" name="budget_frequency" value="{{budget.frequency}}" disabled/>
+                    </fieldset>
+                    <button id="budget_submit_button" type="submit" class="hider"></button>
+                    <!-- dropdown -->
+                    <div class="dropdown frequency-dropdown">
+                        <div class="select">
+                            <!-- collection(first arg), function, argument (second arg) -->
+                            <span class="selected">{{budget.get_frequency}}</span>
+                            <div class="caret"></div>
+                        </div>
+                        <ul class="menu scrollable">
+                            {% with budget_frequency as budget.get_frequency %}
+                                {% for bud_freq in budget_frequencies %}
+                                    {% if bud_freq == budget_frequency %}
+                                        <li class="active">{{bud_freq}}</li>
+                                    {% else %}
+                                        <li>{{bud_freq}}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            [% endwith %]
+                        </ul>
+                    </div>
+                </form>
+                <!-- edit / delete buttons -->
+                <div class="budget-buttons">
+                    <button id="btn_edit_budget"></button>
+                    <button id="btn_reset_edit" class="hider"></button>
+                    <button id="btn_delete_budget" class="hider"></button>
+                </div>
+            {% endif %}
+        </div>
+        <button id="sidebar-toggler"></button>
+    </div>
+    <!-- content-->
+    <div class="content">
+        {% block main_content %}
+
+        {% endblock %}
+    </div>
+{% endblock %}
