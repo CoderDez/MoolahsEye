@@ -60,3 +60,10 @@ function dropdownCheckbox() {
         })
     })
 }
+
+
+function start() {
+    dropdown();
+}
+
+window.addEventListener("load", start)

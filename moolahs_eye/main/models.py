@@ -62,7 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.name
         
     def save(self, *args, **kwargs):
-        validate_email(self.email)
+        #validate_email(self.email)
         if not self.instantiated:
             print("users password: ", self.password)
             if not ut.is_password_valid(self.password):
@@ -131,11 +131,12 @@ class Budget(models.Model):
             for item in self.item_set.all():
                 if item.frequency > self.frequency:
                     return False
+            return True
         except:
             return False
 
 
-    def get_frequency(self, str_rep: True) -> Union[int, str]:
+    def get_frequency(self, str_rep: bool = True) -> Union[int, str]:
         """returns the Budget objects frequency.
 
         if str_rep == True:
@@ -197,6 +198,25 @@ class Budget(models.Model):
             if not self.__is_amount_sufficient():
                 raise mdlexc.InsufficientBudgetAmountException()
         super(Budget, self).save(*args, **kwargs)
+
+
+    @classmethod
+    def create_new_budget(cls, user_id: int):
+        try:
+            if not Budget.objects.filter("New Budget"):
+                budget = Budget(user_id=user_id)
+                budget.save()
+            else:
+                counter = 1
+                while True:
+                    if not Budget.objects.filter(f"New Budget ({counter})"):
+                        budget = Budget(user_id=user_id, name=f"New Budget ({counter})")
+                        budget.save()  
+                        return budget   
+                    else:
+                        counter +=1 
+        except:
+            pass
 
 
 class Category(models.Model):

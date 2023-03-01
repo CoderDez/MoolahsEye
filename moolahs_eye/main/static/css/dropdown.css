@@ -8,13 +8,12 @@
 }
 
 .select {
-    background: var(--entegro-pink);
-    color: #fff;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-radius: 0.5em;
-    padding: 1em;
+    border: .05em solid black;
+    padding: .25em;
     cursor: pointer;
     transition: background 0.3s;
 }
@@ -24,17 +23,13 @@
     box-shadow: 0 0 0.8em black;
 }
 
-.select:hover {
-    background-color: var(--entegro-pink-darker);
-}
-
 
 .caret {
     width: 0;
     height: 0;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
-    border-top: 6px solid #fff;
+    border-top: 6px solid black;
     transition: 0.3s;
 }
 
@@ -46,11 +41,9 @@
 .menu {
     list-style: none;
     padding: 0.2em 0.5em;
-    background: var(--entegro-pink);
     border: 1px black solid;
     box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.2);
     border-radius: 0.5em;
-    color: var(--entegro-white);
     position: absolute;
     top: 3em;
     left: 50%;
@@ -71,7 +64,6 @@
 }
 
 .scrollable li:hover {
-    background-color: var(--darker-grey);
 }
 
 .menu li a {
@@ -82,7 +74,6 @@
 }
 
 .navbar-links > li:hover {
-    background: var(--entegro-pink-darker);
 }
 
 .active {
@@ -94,6 +85,7 @@
     flex-direction: column;
     opacity: 1;
     max-height: 500%;
+    z-index: 5;
 }
 
 .scrollable {

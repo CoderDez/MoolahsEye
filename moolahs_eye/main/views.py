@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
-from .models import Budget, Category, Item, User
+from .models import Budget, Item, User
+from .forms import BudgetForm, ItemForm
 
-
-def login_view(req):    
+def login_view(req):   
     if req.method == "POST":
         email = req.POST.get("email")
         password = req.POST.get("password")
@@ -21,26 +21,81 @@ def login_view(req):
                 logout(req) 
         return render(req, "login.html")
 
-@login_required
-def home_view(req):
-    context = get_context(req)
-    if req.method == "GET":
-        return render(req, "home.html", context)
+def home_view(req, pk=None):
+    budgets = req.user.budget_set.all()
+    if not len(budgets):
+        return redirect("/new_budget")
+    else:
+        return render(req, "items.html", {budgets})
 
-def get_context(req):
+def new_budget_view(req):
     context = {}
-    budgets = req.user.get_budgets()
-    budget = budgets.first()
-    budget_frequencies = Budget.get_frequencies()
-    categories = Category.objects.all()
+    if req.method == "GET":
+        context["form"] = BudgetForm()
+        return render(req, "budget_form.html", context)
+    else:
+        form = BudgetForm(req.POST)
+        if form.isvalid():
+            try:
+                form.save()
+                redirect("/home")
+            except Exception as e:
+                context["form"] = BudgetForm()
+                context["error_message"] = e
+                return render(req, "budget_form.html", context)
+
+def edit_budget_view(req, pk):
+    budget = Budget.objects.filter(id=pk)
     if budget:
-        if len(budget.item_set.all()):
-            context["item_frequencies"] = budget.item_set.all()[0].get_frequencies(limit=True)
+        if req.method == "GET":
+            context = {}
+            context["form"] = BudgetForm(instance=budget)
+            return render(req, "budget_form.html", context)
         else:
-            context["item_frequencies"] = []
-    context["budget"] = budget
-    context["budgets"] = budgets
-    context["budget_frequencies"] = budget_frequencies
-    context["categories"] = categories
-    return context
+            try:
+                form = BudgetForm(req.POST, instance=budget)
+                if form.isvalid():
+                    form.save()
+                    redirect("/home")
+            except Exception as e:
+                context["form"] = BudgetForm(instance=budget)
+                context["error_message"] = e
+                return render(req, "budget_form.html")
+        
+        
+def delete_budget_view(req, pk):
+    try:
+        budget = Budget.objects.filter(id=pk).first()
+        if budget:
+            budget.delete()
+    except:
+        pass
+
+    return redirect("/home")
+
+
+def edit_item_view(req, pk):
+    item = Item.objects.filter(id=pk)
+    if req.method == "GET":
+        context = {"form": ItemForm(instance=item)}
+        return render(req, "items.html", req)
+    else:
+        return 
+
+
+def new_item_view(req, pk):
+    pass
+
+def delete_item_view(req, pk):
+    try:
+        item = Item.objects.filter(id=pk).first()
+        if item:
+            item.delete()
+    except:
+        pass
+
+    return redirect("/home")
+
+
+
 
