@@ -124,7 +124,7 @@ class Budget(models.Model):
         except:
             return False
 
-    def __are_items_frequency_exceeding(self):
+    def __are_items_frequency_exceeding(self) -> bool:
         """Returns True if any item frequencies within the Budget are exceeding 
         the Budgets frequency."""
         try:
@@ -168,7 +168,7 @@ class Budget(models.Model):
         try:
             return self.amount / self.frequency
         except:
-            return 0
+            return 0.0
             
     def get_total_daily_item_costs(self) -> float:
         """returns the total combined total of the daily costs of the items."""
@@ -176,6 +176,24 @@ class Budget(models.Model):
             return sum([i.get_daily_cost() for i in self.item_set.all()])
         except:
             return 0
+
+    
+    def generate_category_breakdown(self) -> dict:
+        """Returns a dict containing information about the budget objects
+        item_set broken into categories in percentages.
+        
+        format of returning dict:
+        category: {
+            'item_names': str
+            'total_cost': float
+            'perc_of_amount' : float
+        }
+        """
+        try:
+            pass
+        except:
+            pass
+
 
 
     def save(self, *args, **kwargs):
@@ -217,6 +235,7 @@ class Budget(models.Model):
                         counter +=1 
         except:
             pass
+
 
 
 class Category(models.Model):

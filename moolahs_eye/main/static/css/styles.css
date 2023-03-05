@@ -1,0 +1,93 @@
+main {
+    width: 100vw;
+    height: 100vh;
+}
+
+#logo, 
+#bootstrap-override nav .dropdown {
+    margin: 0 2.5%;
+}
+
+/* budget details */ 
+.budget-details {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 1% 0;
+    width: 100vw;
+}
+
+.budget-form {
+    width: 100%;
+}
+
+.budget-info {
+    border: 1px solid black;
+}
+
+
+
+/*******(items)*********/
+/* table functionality */
+/***********************/
+
+.table-functionality {
+    display: flex;
+    justify-content: space-between;
+    margin: 1% 0;
+}
+
+.tools {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 50%;   
+}
+
+.view-options {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 50%;
+}
+
+/* hider */
+.hider {
+    position: absolute;
+    bottom: 10000px;
+}
+
+/* images for buttons */
+#calculator,
+#table_item_view,
+#chart_item_view {
+    background-size: cover;
+    background-repeat: no-repeat;
+    width: 40px;
+    height: 40px;
+    background-color: white;
+}
+
+#calculator {
+    background-image: url("../images/calculator.svg");
+}
+
+#table_item_view {
+    background-image: url("../images/table-icon.svg");
+}
+
+#chart_item_view {
+    background-image: url("../images/pie-chart.svg");
+}
+
+
+#bootstrap-override .table-functionality button {
+    margin: 0 .5%;
+    border: none;
+}
+
+#bootstrap-override .table-functionality button:hover {
+    transition: .3s;
+    transform: scale(1.02);
+}
+

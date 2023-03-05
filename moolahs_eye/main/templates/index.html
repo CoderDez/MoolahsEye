@@ -1,32 +1,28 @@
 {% extends 'base.html' %}
 
 {% block main %}
-    <main>
-        <div class="sidebar">
-            <!--page header -->
-            <header class="page-header">
-                <img id="logo" src="../static/images/moolahs_eye.png" alt="Moolah's Eye Logo"/>
+    <main id="bootstrap-override">
+        <div class="container-fluid">
+            <nav class="navbar navbar-dark bg-dark">
+                <a class="navbar-brand" href="#">
+                    <img src="../static/images/moolahs_eye.png" id="logo" width="70" height="70" alt="">
+                </a>
                 <!-- logout dropdown -->
-                <div class="dropdown logout-dropdown">
-                    <div class="select">
-                        <span class="selected">{{user.name}}</span>
-                        <div class="caret"></div>
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{user.name}}
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="{% url 'login_view' %}">Logout</a>
                     </div>
-                    <ul class="menu scrollable">
-                        <li>
-                            <a href="{% url 'login_view' %}">Logout</a>
-                        </li>
-                    </ul> 
                 </div>
-            </header>
-                {% block budget %}
+            </div>
+            <!-- page header -->
+            <div class="content">
+                {% block content %}
 
                 {% endblock %}
-        </div>
-        <div class="content">
-            {% block item %}
-
-            {% endblock %}
+            </div>
         </div>
     </main>
 {% endblock %}
