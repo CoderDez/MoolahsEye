@@ -3,15 +3,17 @@ from django.forms import ModelForm
 
 class BudgetForm(ModelForm):
 
-    def __init__(self, *args,**kwargs):
+    def __init__(self,*args,**kwargs):
         super(BudgetForm, self).__init__(*args, **kwargs)
         # override class for bootstrap purposes
-        for field in ["name", "amount", "frequency"]:
-            classes = {
-                'name': 'form-control',
-                'amount': 'form-control',
-                'frequency': 'form-select'
-            }
+
+        classes = {
+            'user_id': 'hider',
+            'name': 'form-control',
+            'amount': 'form-control',
+            'frequency': 'form-select'
+        }
+        for field in ["user_id", "name", "amount", "frequency"]:
             self.fields[field].widget.attrs.update(
                 {
                     'class': f'{classes[field]}'
@@ -19,11 +21,28 @@ class BudgetForm(ModelForm):
 
     class Meta:
         model = Budget
-        fields = ["name", "amount", "frequency"]
+        fields = ["user_id", "name", "amount", "frequency"]
 
 class ItemForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(ItemForm, self).__init__(*args, **kwargs)
+        classes = {
+            "budget_id": "hider",
+            "name": "form-control",
+            "cost": "form-control",
+            "frequency": "form-select",
+            "category": "form-select"
+        }
+        for field in ["budget_id","name", "cost", "frequency", "category"]:
+            self.fields[field].widget.attrs.update(
+                {
+                    "class": f"{classes[field]}"
+                }
+            )
+
     class Meta:
         model = Item
-        fields = ["name", "cost", "frequency", "category"]
+        fields = ["budget_id","name", "cost", "frequency", "category"]
 
 

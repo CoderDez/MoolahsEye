@@ -86,8 +86,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Budget(models.Model):
     # options for frequency field
     frequencies = (
-        (7, "weekly"),
-        (30, "monthly")
+        (2, "weekly"),
+        (3, "bi-weekly"),
+        (4, "monthly")
     )
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
     name = models.CharField(max_length=40, default="New Budget", null=False, blank=False, unique=True)
@@ -113,7 +114,7 @@ class Budget(models.Model):
         The amount is sufficient if it is greater than or equal to
         the sum of all items costs within the budget."""
         try:
-            return self.get_daily_amount() >= self.get_total_daily_item_costs()
+            return self.amount >= self.get_total_costs()
         except:
             return False
 
@@ -166,34 +167,24 @@ class Budget(models.Model):
     def get_daily_amount(self) -> float:
         """returns a given Budgets daily amount."""
         try:
-            return self.amount / self.frequency
-        except:
+            if self.frequency == 2:
+                return self.amount / 7
+            elif self.frequency == 3:
+                return self.amount / 14
+            elif self.frequency == 4:
+                return (self.amount * 12) / 365
+        except Exception as e:
+            print(e)
             return 0.0
             
-    def get_total_daily_item_costs(self) -> float:
-        """returns the total combined total of the daily costs of the items."""
+    def get_total_costs(self) -> float:
+        """returns the total costs"""
         try:
+            print([i.get_daily_cost() for i in self.item_set.all()])
             return sum([i.get_daily_cost() for i in self.item_set.all()])
-        except:
+        except Exception as e:
+            print(e)
             return 0
-
-    
-    def generate_category_breakdown(self) -> dict:
-        """Returns a dict containing information about the budget objects
-        item_set broken into categories in percentages.
-        
-        format of returning dict:
-        category: {
-            'item_names': str
-            'total_cost': float
-            'perc_of_amount' : float
-        }
-        """
-        try:
-            pass
-        except:
-            pass
-
 
 
     def save(self, *args, **kwargs):
@@ -241,13 +232,17 @@ class Budget(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=40, default="New Category", null=False, blank=False, unique=True)
 
+    def __str__(self):
+        return self.name
+    
     
 class Item(models.Model):
     # options for frequency field
     frequencies = (
         (1, "daily"),
-        (7, "weekly"),
-        (30, "monthly")
+        (2, "weekly"),
+        (3, "bi-weekly"),
+        (4, "monthly")
     )
 
     budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE)
@@ -283,9 +278,17 @@ class Item(models.Model):
         of all items to exceed the budget's amount."""
         try:
             other_items = self.budget_id.item_set.exclude(id=self.id)
+            print(other_items)
             costs = sum([i.get_daily_cost() for i in other_items])
-            return (self.get_daily_cost() + costs) <= self.budget_id.get_daily_amount()
-        except:
+            print(costs)
+            print(self.get_daily_cost())
+            print(self.budget_id.get_daily_amount())
+            res = (self.get_daily_cost() + costs) <= self.budget_id.get_daily_amount()
+            print("r", res)
+            return res
+        except Exception as e:
+            print(e)
+            print("yes")
             return False
 
     def __is_cost_positive(self) -> bool:
@@ -334,7 +337,18 @@ class Item(models.Model):
     def get_daily_cost(self) -> float:
         """returns the daily cost of a given item (amount / frequency)"""
         try:
-            return self.cost / self.frequency
+            print("frequency: ", self.frequency)
+            if self.frequency == 1:
+                return self.cost
+            elif self.frequency == 2:
+                return self.cost / 7
+            elif self.frequency == 3:
+                return self.cost / 14
+            elif self.frequency == 4:
+                return (self.cost * 12) / 365
+            else:
+                print("??")
+                return 0
         except:
             return 0
 
@@ -367,9 +381,11 @@ class Item(models.Model):
 
         # ensure cost is permissible
         if self.__is_item_cost_permissible():
+            print(True)
             super(Item, self).save(*args, **kwargs)
             self.budget_id.save()    
         else:
+            print(False)
             raise mdlexc.ImpermissibleItemCostException()
 
 

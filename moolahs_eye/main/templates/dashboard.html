@@ -3,16 +3,19 @@
 
 {% load static %}
 {% block static_resources %}
-<link rel="stylesheet" type="text/css" href="{% static '/css/styles.css' %}"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="{% static '/css/styles.css' %}"/>
 <script src="{% static 'js/budget.js' %}"></script>
 {% endblock %}
 
 {% block content %}
     <div class="budget-details container">
-        <!-- form -->
+        <!-- budget form -->
         {% if budget_form %}
             <form class="budget-form" method="post" action="">
                 {% csrf_token %}
+                <!-- user id -->
+                {{budget_form.user_id}}
+            
                 <div class="row g-2">
                     <!-- name -->
                     <div class="col-md">
@@ -26,7 +29,7 @@
                     <div class="col-md">
                         <div class="form-floating">
                             {{budget_form.amount}}
-                            <label for="{{ budget_form.amount.id_for_label }}">Name</label>
+                            <label for="{{ budget_form.amount.id_for_label }}">Amount</label>
                         </div>  
                     </div>
 
@@ -38,36 +41,59 @@
                         </div>  
                     </div>
 
-                    <div class="col-md btn-group-vertical" role="group">
+                    <div class="col-md btn-group" role="group">
                         {% if budget %}
-                            <a id="btn_cancel_budget_edit" class="hider" 
-                            href="{% url 'dashboard_view' id=budget.id %}">Cancel</a>
+                            <a id="cancel_budget" class="hider" 
+                            href="{% url 'dashboard_view' id=budget.id %}"></a>
+                        {% else %}
+                            <a id="cancel_budget" class="hider" 
+                            href="{% url 'dashboard_view' id=0 %}"></a>
                         {% endif %}
-                        <button id="cancel_budget_edit" type="button" class="btn btn-danger">Cancel</button> 
-                        <button id="save_budget" type="submit" class="btn btn-success">Save</button>
+                        <button id="btn_cancel_budget" type="button" class="btn btn-danger">Cancel</button> 
+                        <button id="btn_save_budget" type="submit" class="btn btn-success">Save</button>
                     </div>
-
                 </div>
             </form>
+           <!-- messages -->
+            {% if messages %}
+                {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                        <!-- bootstrap alert -->
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <strong>{{ message }}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+                        {% if message.tags == 'success' %}
+                        <!-- bootstrap alert -->
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong>{{ message }}</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+            {% endif %}
+            <!-- end of messages -->
         <!-- end of form -->
         {% else %}
+        <!-- budget info -->
             <div class="budget-info row">
                 <div class="col">
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            {{budget.name}}
+                        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          {{budget.name}}
                         </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <ul class="dropdown-menu">
                             {% for bgt in budgets %}
-                                {% if budget != bgt %}
-                                    <a class="dropdown-item" href="{% url 'dashboard_view' id=budget.id %}">{{budget.name}}</a>
-                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'dashboard_view' id=bgt.id %}">{{bgt.name}}</a>
+                                </li>
                             {% endfor %}
-                        </div>
+                        </ul>
                     </div>
                 </div>
                 <div class="col">
-                    <input class="form-control" type="text" value="{{budget.amount}}" 
+                    <input class="form-control" type="number" value="{{budget.amount}}" 
                     aria-label="readonly input example" readonly>    
                 </div>
                 <div class="col">
@@ -75,39 +101,48 @@
                     aria-label="readonly input example" readonly>  
                 </div>    
                 <div class="col">
-                    <div class="col btn-group">
-                        <button id="btn_edit_budget" type="button" class="btn">Edit</button> 
-                        <button id="btn_delete_budget" type="button" class="btn">Delete</button> 
-                        <button id="btn_new_budget" type="button" class="btn">New</button>
+                    <div id="budget-buttons" class="col btn-group">
+                        <button id="btn_edit_budget" type="button" class="btn btn-primary">Edit</button> 
+                        <button id="btn_delete_budget" type="button" class="btn btn-danger">Delete</button> 
+                        <button id="btn_new_budget" type="button" class="btn btn-success">New+</button>
                     </div>  
                 </div>  
             </div>
-            <div class="anchors hider">
-                <a id="edit_budget" href="{% url 'edit_budget_view' id=budget.id %}"></a>
-                <a id="delete_budget" href="{% url 'delete_budget_view' id=budget.id %}"></a>
-                <a id="new_budget"href="{% url 'new_budget_view' id=budget.id %}"></a>
-            </div>
-            {% if error_message %}
-                <p class="notice">{{error_message}}</p>
-            {% endif %}
+            <!-- end of budget info -->
         {% endif %}
     </div>
-    <div class="table-functionality">
-        <div class="tools">
-            <button id="calculator">
+    <!-- table functionality -->
+    <div class="table-functionality container">
+        <div class="table-functionality-buttons btn-group">
+            <button id="table_item_view" class="btn btn-light">
+                Table
+            </button>
+            <button id="chart_item_view" class="btn btn-light">
+                Chart           
             </button>
         </div>
-        <div class="view-options">
-                <button id="table_item_view">
-                    
-                </button>
-                <button id="chart_item_view">
-                    
-                </button>
+        <div>
+            <div class="costs-container">
+                <div class="form-floating">
+                    {% if budget %}
+                        <input id="item_costs" class="form-control" type="number" 
+                        value="{{budget.get_total_costs}}" aria-label="readonly input example" readonly/>
+                    {% else %}
+                        <input id="item_costs" class="form-control" type="number" 
+                        value="0" aria-label="readonly input example" readonly/>
+                    {% endif %}
+                    <label for="item_costs">Total Item Costs</label>
+                </div>  
+                <button class="btn btn-info" id="calculator">
+                    <i class="fa fa-calculator"></i>
+                </button>             
+            </div>
         </div>
     </div>
-    <div class="items-container">
-        <table border="1 | 0" cellpadding="3" class="table">
+    <!-- end of functionality -->
+    <!-- items container -->
+    <div class="items-container container">
+        <table border="1 | 0" cellpadding="3" class="table items-table">
             <thead>
                 <tr>
                     <th scope="col">Name</th>
@@ -115,35 +150,115 @@
                     <th scope="col">Frequency</th>
                     <th scope="col">Category</th>
                     <th scope="col">
-                        <button id="btn_new_item" class="btn">New Item+</button>
+                        {% if budget %}
+                            <a id="btn_new_item" class="btn btn-success"
+                            href = "{% url 'new_item_view' budget_id=budget.id %}">
+                            New+
+                            </a>
+                        {% else %}
+                            <a id="btn_new_item" class="btn btn-success"
+                            href="#">
+                            New+
+                            </a>
+                        {% endif %}
                     </th>
                 </tr>
             </thead>
             <tbody>
                 {% if item_form %}
                     <tr>
-                        <td colspan="4">
-                            <form method="post" action="">
+                        <td colspan="5">
+                            <form class="item-form" method="post" action="">
                                 {% csrf_token %}
-                                {{item_form}}
+                                <!-- user id -->
+                                {{item_form.budget_id}}
+                            
+                                <div class="row g-2">
+                                    <!-- name -->
+                                    <div class="col-md">
+                                        <div class="form-floating">
+                                            {{item_form.name}}
+                                            <label for="{{ item_form.name.id_for_label }}">Name</label>
+                                        </div>  
+                                    </div>
+                                
+                                    <!-- cost -->
+                                    <div class="col-md">
+                                        <div class="form-floating">
+                                            {{item_form.cost}}
+                                            <label for="{{ item_form.cost.id_for_label }}">Cost</label>
+                                        </div>  
+                                    </div>
+                
+                                    <!-- frequency -->
+                                    <div class="col-md">
+                                        <div class="form-floating">
+                                            {{item_form.frequency}}
+                                            <label for="{{ item_form.freqeuency.id_for_label }}">Frequency</label>
+                                        </div>  
+                                    </div>
+                                    
+                                    <!-- category -->
+                                    <div class="col-md">
+                                        <div class="form-floating">
+                                            {{item_form.category}}
+                                           <label for="{{item_form.category.id_for_label}}">Category</label>
+                                        </div>
+                                    </div>
+                
+                                    <div id="item_buttons" class="col-md btn-group" role="group">
+                                        <button id="btn_cancel_item" type="button" class="btn btn-primary">Cancel</button>      
+                                        {% if item %}
+                                            <button id="btn_delete_item" type="button" class="btn btn-danger">Delete</button>
+                                        {% endif %}
+                                        <button id="btn_save_item" type="submit" class="btn btn-success">Save</button>
+                                    </div>
+                                </div>
                             </form>
                         </td>
                     </tr>
                 {% endif %}
 
-                {% for item in budget.item_set.all %}
-                    <tr>
-                        <!-- Name -->
-                        <td>{{item.name}}</td>
-                        <!-- Cost -->
-                        <td>{{item.cost}}</td>
-                        <!-- frequency -->
-                        <td>{{item.get_frequency}}</td>
-                        <!-- category -->
-                        <td>{{item.category.name}}</td>
-                    </tr>
-                {% endfor %}
+                {% if budget %}
+                    {% for item in items %}
+                            <!-- Name -->
+                            <td>{{item.name}}</td>
+                            <!-- Cost -->
+                            <td>{{item.cost}}</td>
+                            <!-- frequency -->
+                            <td>{{item.get_frequency}}</td>
+                            <!-- category -->
+                            <td>{{item.category.name}}</td>
+                            <td>
+                                <a href="{% url 'edit_item_view' budget_id=budget.id item_id=item.id %}" class="btn">
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
             </tbody>
         </table>
+    </div>
+
+    <div id="anchors" class="hider">
+        <!-- budget anchors -->
+        {% if budget %}
+        <div id="budget-anchors">
+            <a id="edit_budget" href="{% url 'edit_budget_view' id=budget.id %}"></a>
+            <a id="delete_budget" href="{% url 'delete_budget_view' id=budget.id %}"></a>
+            <a id="new_budget"href="{% url 'new_budget_view'%}"></a>
+        </div>
+        <!-- anchors for item form buttons -->
+        <div id="item-anchors">
+            {% if item %}
+                <a id="delete_item" class="hider"
+                href="{% url 'delete_item_view' item_id=item.id budget_id=budget.id %}"></a>
+            {% endif %}
+            <a id="cancel_item" class="hider" 
+            href="{% url 'dashboard_view' id=budget.id %}"></a>
+        </div>
+        <!-- end of anchors for item form buttons -->
+        {% endif %}
     </div>
 {% endblock %}

@@ -9,8 +9,7 @@
 
 {% block main %}
     <div class="login">
-        <!--<img src="{% static '/images/' %}" alt="Moolah's Eye Logo" class="login-logo"/>-->
-        <h1 class="text-center">Moolah's Eye</h1>
+        <img src="{% static '/images/logo.png' %}" alt="Moolah's Eye Logo" class="login-logo"/>
         {% if error_message %}
             <p class="error-message">{{error_message}}</p>
         {% endif %}

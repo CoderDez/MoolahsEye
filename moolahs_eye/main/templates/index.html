@@ -3,18 +3,20 @@
 {% block main %}
     <main id="bootstrap-override">
         <div class="container-fluid">
-            <nav class="navbar navbar-dark bg-dark">
+            <nav class="navbar bg-dark">
                 <a class="navbar-brand" href="#">
-                    <img src="../static/images/moolahs_eye.png" id="logo" width="70" height="70" alt="">
+                    <img src="../static/images/logo.png" id="logo" alt="Moolah's Eye Logo">
                 </a>
                 <!-- logout dropdown -->
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {{user.name}}
+                <div class="dropdown logout-dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      {{user.name}}
                     </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="{% url 'login_view' %}">Logout</a>
-                    </div>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'login_view'%}">Logout</a>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <!-- page header -->
