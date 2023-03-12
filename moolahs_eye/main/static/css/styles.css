@@ -3,7 +3,9 @@
 }
 
 body {
-    overflow-x: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: var(--logo-bg);
 }
 
 main {
@@ -13,7 +15,6 @@ main {
 
 /* navbar */
 .navbar {
-    background-color: var(--logo-bg);
     box-shadow: 0 0 .5rem black;
 }
 
@@ -46,6 +47,7 @@ main {
     flex-direction: row;
     justify-content: flex-start;
     padding: 1% 0;
+    margin: 1% auto;
 }
 
 .budget-form {
@@ -62,9 +64,12 @@ main {
     justify-content: space-between;
 }
 
-
 .table-functionality-buttons {
     box-shadow: 0 0 .5rem black;
+}
+
+.items-view-chosen {
+    background-color: #d3d4d5;
 }
 
 .costs-container {
@@ -72,18 +77,64 @@ main {
 }
 
 /* items container */
+
+.items-container {
+    margin: 2.5% auto;
+}
+
+/* items table */
 .items-table {
     background-color: white;
 }
 
+.items-table tbody td {
+    padding: 1%;
+}
+
+/* data breakdown */
+.data-breakdown {
+    width: 100%;
+    display: flex;
+    margin: 2.5% auto;
+}
+
+#pie_chart {
+    width: 40% !important;
+    height: auto !important;
+}
+
+.metadata {
+    width: 25%;
+}
+
 /* hider */
 .hider {
-    position: absolute;
-    bottom: 10000px;
+    display:none;
 }
 
 /* buttons */
 #btn_delete_budget {
     text-decoration: underline;
 }
+
+#calculator,
+#table_item_view,
+#chart_item_view {
+    font-size: 150%;
+}
+
+.btn-budget-dropdown {
+    border: .05rem solid rgb(50, 50, 50);
+}
+
+#btn_item_edit_done,
+.btn-edit-item {
+    font-size: 125%;
+}
+
+
+
+
+
+
 

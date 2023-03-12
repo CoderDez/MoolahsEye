@@ -32,3 +32,10 @@ def has_items(list: list) -> bool:
         return bool(len(list))
     except:
         return False
+    
+@register.filter
+def format_float(val) -> str:
+    try:
+        return "{0:,.2f}".format(val)
+    except Exception as e:
+        return val

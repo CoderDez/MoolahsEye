@@ -11,5 +11,7 @@ urlpatterns = [
 
     path("edit_item/<int:budget_id>/<int:item_id>", views.edit_item_view, name="edit_item_view"),
     path("new_item/<int:budget_id>", views.new_item_view, name="new_item_view"),
-    path("delete_item/<int:budget_id>/<int:item_id>", views.delete_item_view, name="delete_item_view")
+    path("delete_item/<int:budget_id>/<int:item_id>", views.delete_item_view, name="delete_item_view"),
+
+    path("calculator/<int:budget_id>", views.calculator_view, name="calculator_view")
 ]

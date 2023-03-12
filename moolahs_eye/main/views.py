@@ -32,15 +32,23 @@ def dashboard_view(req, id=-0):
         
     if budget:
         items = budget.item_set.all()
+        breakdown = budget.get_categorical_breakdown()
+        data_points = budget.get_data_points()
         return render(
             req, "dashboard.html",
-            {"budgets": budgets, "budget": budget, "items": items}
+            {"budgets": budgets, "budget": budget, 
+             "items": items, "breakdown": breakdown,
+             "data_points": data_points
+            }
         )
     elif budgets:
         items = budgets[0].item_set.all()
+        breakdown = budgets[0].get_categorical_breakdown()
+        data_points = budgets[0].get_data_points()
         return render(
             req, "dashboard.html",
-            {"budgets": budgets, "budget": budgets[0], "items": items}
+            {"budgets": budgets, "budget": budgets[0], 
+             "items": items, "data_points": data_points}
         )
     else:
         return redirect("new_budget_view")
@@ -59,9 +67,11 @@ def new_budget_view(req):
                 messages.success(req, message=f"{budget.name} has been created.")
                 return redirect("dashboard_view", id=budget.id)
             except Exception as e:
-                pass
+                messages.error(req, e)
+        
         for error in form.errors:
             messages.error(req, error)
+
         context["budget_form"] = form
         return render(req, "dashboard.html", context)
 
@@ -69,6 +79,8 @@ def edit_budget_view(req, id):
     context = {}
     budget = Budget.objects.filter(id=id).first()
     if budget:
+        context["budget"] = budget
+        context["items"] = budget.item_set.all()
         if req.method == "GET":
             context["budget_form"] = BudgetForm(instance=budget, initial = {"user_id": req.user.id})
             return render(req, "dashboard.html", context)
@@ -81,8 +93,8 @@ def edit_budget_view(req, id):
                 else:
                     for error in form.errors:
                         messages.error(req, error)
-            except:
-                pass
+            except Exception as e:
+                messages.error(req, e)
             context["budget_form"] = BudgetForm(req.POST)
             return render(req, "dashboard.html", context)
         
@@ -105,10 +117,8 @@ def delete_budget_view(req, id):
 def edit_item_view(req, budget_id, item_id):
     context = {}
     item = Item.objects.filter(id=item_id).first()
-    print("item: ", item)
     if item:
         budget = Budget.objects.filter(id=budget_id).first()
-        print("budget: ", budget)
         if budget:
             context["budget"] = budget
             context["items"] = budget.item_set.exclude(id=item.id)
@@ -118,17 +128,18 @@ def edit_item_view(req, budget_id, item_id):
                 return render(req, "dashboard.html", context)
             else:
                 try:
-                    form = BudgetForm(req.POST, instance = item)
+                    form = ItemForm(req.POST, instance = item)
                     if form.is_valid():
                         form.save()
                         return redirect("dashboard_view", id=budget_id)
                     else:
                         for error in form.errors:
+                            print(error)
                             messages.error(req, error)
                 except:
                     pass
 
-                context["item_form"] = Item(req.POST)
+                context["item_form"] = ItemForm(req.POST)
                 return render(req, "dashboard.html", context)
 
 def new_item_view(req, budget_id):
@@ -163,6 +174,22 @@ def delete_item_view(req, budget_id, item_id):
         pass
 
     return redirect("dashboard_view", id=budget_id)
+
+
+def calculator_view(req, budget_id):
+    try:
+        context = {}
+        budget = Budget.objects.filter(id=budget_id).first()
+        if budget:
+            context["budget"] = budget
+            context["items"] = budget.get_item_real_costs()
+
+        return render(req,"calculator.html", context)
+    except:
+        pass
+
+    return redirect("dashboard_view", id=budget_id)
+
 
 
 

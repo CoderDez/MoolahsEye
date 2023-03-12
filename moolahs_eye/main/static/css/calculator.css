@@ -1,0 +1,24 @@
+
+.main-content-container {
+    display: flex;
+}
+
+.items-container {
+    width: 30% !important;
+}
+
+.calculator-container {
+    width: 70% !important;
+}
+
+.calculator {
+    width: 60%;
+    height: auto;
+}
+
+.calculator-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 25%);
+    grid-template-rows: repeat(5, 20%);
+    gap:1px;
+}

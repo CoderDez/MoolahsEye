@@ -1,0 +1,86 @@
+{% extends 'index.html' %}
+{% block title %} Calculations {% endblock %}
+
+{% load static %}
+{% block static_resources %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="{% static '/css/styles.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static '/css/calculator.css' %}"/>
+<script src="{% static 'js/calculator.js' %}"></script>
+{% endblock %}
+
+{% load custom_filters %}
+{% block content %}
+    <div class="budget-details container">
+        <!-- budget info -->
+        <div class="budget-info row">
+            <div class="col">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{budget.name}}
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for bgt in budgets %}
+                            <li>
+                                <a class="dropdown-item" href="{% url 'calculator_view' id=bgt.id %}">{{bgt.name}}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col">
+                <!-- budget amount-->
+                <input class="form-control" type="text" value= "€ {{budget.amount|format_float}}" 
+                aria-label="readonly input example" readonly>    
+            </div>
+            <div class="col">
+                <!-- budget frequency-->
+                <input class="form-control" type="text" value="{{budget.get_frequency}}" 
+                aria-label="readonly input example" readonly>  
+            </div>    
+        </div>
+        <!-- end of budget info -->
+    </div>
+    <div class="costs-container container">
+        <div class="form-floating">
+            <input id="item_costs" class="form-control" type="text" 
+            value="€ {{budget.get_total_costs|format_float}}" aria-label="readonly input example" readonly/>
+            <label for="item_costs">Total Item Costs</label>
+        </div>
+        <a type="button" href="{% url 'dashboard_view' id=budget.id %}" class="btn btn-info" id="calculator">
+            <i class="fa fa-home" aria-hidden="true"></i>
+        </a>
+    </div>
+    <div class="main-content-container container">
+        <div class="items-container container">
+            <table border="1 | 0" cellpadding="3" class="table table-striped items-table">
+                <thead class="thead-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Cost (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <!-- Name -->
+                            <td>{{item}}</td>
+                            <!-- Cost -->
+                            <td>{{items|lookup:item}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>   
+        </div>  
+        <div class="calculator-container container">
+            <div class="calculator">
+                <div class="display">
+
+                </div>
+                <div class="calculator-buttons">
+                </div>
+            </div>
+        </div>  
+    </div>
+{% endblock %}
+

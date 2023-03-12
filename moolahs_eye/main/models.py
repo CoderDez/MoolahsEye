@@ -64,7 +64,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         #validate_email(self.email)
         if not self.instantiated:
-            print("users password: ", self.password)
             if not ut.is_password_valid(self.password):
                 raise mdlexc.PasswordValueException()
             else:
@@ -79,7 +78,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         try:
             return self.budget_set.all().order_by(models.functions.Lower('name'))
         except Exception as e:
-            print("bang: ", e)
             return models.QuerySet()
         
 
@@ -131,11 +129,10 @@ class Budget(models.Model):
         try:
             for item in self.item_set.all():
                 if item.frequency > self.frequency:
-                    return False
+                    return True
             return True
         except:
             return False
-
 
     def get_frequency(self, str_rep: bool = True) -> Union[int, str]:
         """returns the Budget objects frequency.
@@ -178,14 +175,12 @@ class Budget(models.Model):
             return 0.0
             
     def get_total_costs(self) -> float:
-        """returns the total costs"""
+        """returns the total costs of all items converted to the budgets frequency."""
         try:
-            print([i.get_daily_cost() for i in self.item_set.all()])
-            return sum([i.get_daily_cost() for i in self.item_set.all()])
+            return round(sum([item.get_real_cost() for item in self.item_set.all()]), 2)
         except Exception as e:
             print(e)
             return 0
-
 
     def save(self, *args, **kwargs):
         # ensure amount is positive
@@ -196,18 +191,91 @@ class Budget(models.Model):
         if not self.__is_frequency_valid():
             raise mdlexc.InvalidFrequencyException()
         
-        if not self.__are_items_frequency_exceeding():
-            raise mdlexc.FrequencyExceedanceException()
-        
         # set frequency to int representation.
         self.frequency = self.get_frequency(str_rep=False)
 
         # validate amount if primary key generated (object has been instantiated)
         if self.pk:
+            if not self.__are_items_frequency_exceeding():
+                raise mdlexc.FrequencyExceedanceException()
             if not self.__is_amount_sufficient():
                 raise mdlexc.InsufficientBudgetAmountException()
         super(Budget, self).save(*args, **kwargs)
 
+    def get_categorical_breakdown(self):
+        try:
+            total = 0
+            breakdown = {cat.name: {"cost": 0, "perc": 0} for cat in Category.objects.all()}
+            for item in self.item_set.all():
+                item_cost = item.get_real_cost()
+                total += item_cost
+                breakdown[item.category.name]["cost"] += item_cost
+            
+            other = self.amount - total
+            if other:
+                breakdown["Available"] = {
+                    "cost": other,
+                    "perc": 0
+                }
+
+            for cat in breakdown:
+                breakdown[cat]["cost"] = round(breakdown[cat]["cost"], 2)
+                breakdown[cat]["perc"] = round((breakdown[cat]["cost"] / self.amount) * 100, 2)
+            
+            return breakdown
+        except Exception as e:
+            print(e)
+            pass
+    
+    def get_items_by_cost(self, desc=True):
+        try:
+            if desc:
+                return self.item_set.order_by('-cost')
+            else:
+                return self.item_set.order_by('cost')
+        except Exception as e:
+            print(e)
+            pass
+    
+
+    def get_data_points(self):
+        """Returns a dict containing important data about a budget.
+        
+        key-value pairs of dict being returned:
+           "Daily Costs": float, 
+           "Weekly Costs": float, 
+           "Monthly Costs": float"""
+        try:
+            ret = {
+                "Daily Costs": 0, 
+                "Weekly Costs": 0, 
+                "Monthly Costs": 0
+            }
+            
+            items = self.item_set.all()
+            if items:
+                for item in items:
+                    ret["Daily Costs"] += item.get_daily_cost()
+                    ret["Weekly Costs"] += item.get_weekly_cost()
+                    ret["Monthly Costs"] += item.get_monthly_cost()
+
+                ret["Daily Costs"] = round(ret["Daily Costs"], 2)
+                ret["Weekly Costs"] = round(ret["Weekly Costs"], 2)
+                ret["Monthly Costs"] = round(ret["Monthly Costs"], 2)
+
+            return ret
+        except Exception as e:
+            print(e)
+            return ret
+    
+    def get_item_real_costs(self):
+        ret = {}
+        try:
+            for item in self.item_set.all():
+                ret[item.name] = round(item.get_real_cost(),2)
+        except:
+            pass
+        return ret
 
     @classmethod
     def create_new_budget(cls, user_id: int):
@@ -226,7 +294,6 @@ class Budget(models.Model):
                         counter +=1 
         except:
             pass
-
 
 
 class Category(models.Model):
@@ -278,17 +345,11 @@ class Item(models.Model):
         of all items to exceed the budget's amount."""
         try:
             other_items = self.budget_id.item_set.exclude(id=self.id)
-            print(other_items)
-            costs = sum([i.get_daily_cost() for i in other_items])
-            print(costs)
-            print(self.get_daily_cost())
-            print(self.budget_id.get_daily_amount())
-            res = (self.get_daily_cost() + costs) <= self.budget_id.get_daily_amount()
-            print("r", res)
+            costs = sum([i.get_real_cost() for i in other_items])
+            res = (self.get_real_cost() + costs) <= self.budget_id.amount
             return res
         except Exception as e:
             print(e)
-            print("yes")
             return False
 
     def __is_cost_positive(self) -> bool:
@@ -316,13 +377,12 @@ class Item(models.Model):
             pass
 
     def get_frequencies(self, str_rep: bool = True, limit:bool=False) -> list:
-        """returns all possible item frequecies.
+        """returns all possible item frequencies.
         
         if limit == True:
             return frequencies that are less than or equal to Budgets frequencies
         else:
-            return all frequencies
-        """
+            return all frequencies"""
         try:
             freqs = []
             for freq in Item.frequencies:
@@ -333,11 +393,9 @@ class Item(models.Model):
         except:
             pass
 
-
     def get_daily_cost(self) -> float:
         """returns the daily cost of a given item (amount / frequency)"""
         try:
-            print("frequency: ", self.frequency)
             if self.frequency == 1:
                 return self.cost
             elif self.frequency == 2:
@@ -347,7 +405,67 @@ class Item(models.Model):
             elif self.frequency == 4:
                 return (self.cost * 12) / 365
             else:
-                print("??")
+                return 0
+        except:
+            return 0
+        
+    def get_weekly_cost(self) -> float:
+        try:
+            if self.frequency == 1:
+                return self.cost * 7
+            elif self.frequency == 2:
+                return self.cost
+            elif self.frequency == 3:
+                return self.cost / 2
+            elif self.frequency == 4:
+                return (self.cost * 12) / 52
+            
+            return 0
+        except:
+            return 0
+        
+    def get_monthly_cost(self) -> float:
+        try:
+            if self.frequency == 1:
+                return (self.cost * 365) / 12
+            elif self.frequency == 2:
+                return (self.cost * 52) / 12
+            elif self.frequency == 3:
+                return (self.cost * 26) / 12
+            elif self.frequency == 4:
+                return self.cost
+            
+            return 0
+        except:
+            return 0
+
+    def get_real_cost(self):
+        try:
+            ### frequencies:
+            # 1 = daily, 2 = weekly, 3 = bi-weekly, 4 = monthly
+            if self.frequency == self.budget_id.frequency:
+                return self.cost
+            else:
+                # items frequency is daily
+                if self.frequency == 1:
+                    if self.budget_id.frequency == 2: 
+                        return self.cost * 7
+                    elif self.budget_id.frequency == 3: 
+                        return self.cost * 14
+                    elif self.budget_id.frequency == 4: 
+                        return (self.cost * 365) / 12
+                
+                # items frequency is weekly
+                elif self.frequency == 2:
+                    if self.budget_id.frequency == 3:
+                        return self.cost * 2
+                    elif self.budget_id.frequency == 4: 
+                        return (self.cost * 52) / 12
+                
+                # items frequency is bi weekly
+                elif self.frequency == 3:
+                    return (self.cost * 26) / 12 
+                
                 return 0
         except:
             return 0
@@ -381,11 +499,9 @@ class Item(models.Model):
 
         # ensure cost is permissible
         if self.__is_item_cost_permissible():
-            print(True)
             super(Item, self).save(*args, **kwargs)
             self.budget_id.save()    
         else:
-            print(False)
             raise mdlexc.ImpermissibleItemCostException()
 
 
