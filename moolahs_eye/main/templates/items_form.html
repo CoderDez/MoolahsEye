@@ -1,0 +1,51 @@
+{% extends 'budget_choose.html' %}
+{% block title %} Home {% endblock %}
+
+{% block static_resources %}
+{% endblock %}
+
+{% block item_block %}
+<div class="format-toggler">
+    <button>Table</button>
+    {% if form %}
+        <button>Chart</button>
+    {% endif %}
+</div>
+<div class="items-container">
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Cost</th>
+                <th>Frequency</th>
+                <th>Cost</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <form class="item-form" action="" method="POST">
+                    {% csrf_token %}
+                    {{form}}
+                    <fieldset class="item-form-buttons">
+                        <a href="">Delete</a>
+                        <button class="">Save</button>
+                    </fieldset>
+                </form>
+            </tr>
+            {% for item in budget.item_set.all %}
+                <tr>
+                    <!-- Name -->
+                    <td>{{item.name}}</td>
+                    <!-- Cost -->
+                    <td>{{item.cost}}</td>
+                    <!-- frequency -->
+                    <td>{{item.get_frequency}}</td>
+                    <!-- category -->
+                    <td>{{item.category.name}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
