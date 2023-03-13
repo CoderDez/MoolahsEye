@@ -7,6 +7,7 @@
 <link rel="stylesheet" type="text/css" href="{% static '/css/styles.css' %}"/>
 <link rel="stylesheet" type="text/css" href="{% static '/css/calculator.css' %}"/>
 <script src="{% static 'js/calculator.js' %}"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 {% endblock %}
 
 {% load custom_filters %}
@@ -42,45 +43,108 @@
         <!-- end of budget info -->
     </div>
     <div class="costs-container container">
-        <div class="form-floating">
-            <input id="item_costs" class="form-control" type="text" 
-            value="€ {{budget.get_total_costs|format_float}}" aria-label="readonly input example" readonly/>
+        <form class="costs-form" method="post" action="">
+            {% csrf_token %}
+            <div class="form-floating">
+                <input id="item_costs" class="form-control" type="text" 
+                value="€ {{amount}}" aria-label="readonly input example" readonly/>
             <label for="item_costs">Total Item Costs</label>
-        </div>
-        <a type="button" href="{% url 'dashboard_view' id=budget.id %}" class="btn btn-info" id="calculator">
-            <i class="fa fa-home" aria-hidden="true"></i>
-        </a>
+            </div>
+            <div class="form-floating">
+                <select id="frequency_select" class="form-select" aria-label="" name="frequency">
+                    {% for freq in frequencies %}
+                        {% if freq == frequency %}
+                            <option selected>{{freq}}</option>
+                        {% else %}
+                            <option value="{{freq}}">{{freq}}</option>
+                        {% endif %}
+                    {% endfor %}
+                  </select>
+                <label for="frequency">Frequency</label>
+            </div>
+
+            <a type="button" href="{% url 'dashboard_view' id=budget.id %}" class="btn btn-info" id="calculator">
+                <i class="fa fa-home" aria-hidden="true"></i>
+            </a>
+            <button id="submit_new_freq" type="submit" class="hider"></button>
     </div>
+    <!-- main content  -->
     <div class="main-content-container container">
+        <!-- items -->
         <div class="items-container container">
             <table border="1 | 0" cellpadding="3" class="table table-striped items-table">
                 <thead class="thead-light">
                     <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Cost (€)</th>
+                        <th scope="col" class="text-left">Name</th>
+                        <th scope="col" class="text-justify">Cost (€)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items %}
                         <tr>
                             <!-- Name -->
-                            <td>{{item}}</td>
+                            <td class="text-left">{{item}}</td>
                             <!-- Cost -->
-                            <td>{{items|lookup:item}}</td>
+                            <td class="text-justify">{{items|lookup:item}}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>   
         </div>  
+        <!-- end of items -->
+        <!-- calculator -->
         <div class="calculator-container container">
             <div class="calculator">
-                <div class="display">
+                <div class="calculator-display">
+                    <input id="display_input" type="text" value="0" disabled/>
+                </div>
+                <div id="calculator-buttons" class="grid-container">
+                    <button type="button" data-value="clear" class="btn btn-danger">C</button>
+                           
+                    <button type="button" data-value="backspace" class="btn btn-danger">
+                        <i class="material-icons">backspace</i>
+                    </button>
+
+                    <button type="button" data-value="/" class="btn btn-secondary">&divide;</button>
+
+                    <button type="button" data-value="x" class="btn btn-secondary">&times;</button>
+
+                    <button type="button" data-value="9" class="btn btn-secondary">9</button>
+                
+                    <button type="button" data-value="8" class="btn btn-secondary">8</button>
+                
+                    <button type="button" data-value="7" class="btn btn-secondary">7</button>
+                
+                    <button type="button" data-value="+" class="btn btn-secondary">&plus;</button>
+                
+                    <button type="button" data-value="4" class="btn btn-secondary">4</button>
+
+                    <button type="button" data-value="5" class="btn btn-secondary">5</button>
+
+                    <button type="button" data-value="6" class="btn btn-secondary">6</button>
+
+                    <button type="button" data-value="-" class="btn btn-secondary">&minus;</button>
+
+                    <button type="button" data-value="3" class="btn btn-secondary">3</button>
+
+                    <button type="button" data-value="2" class="btn btn-secondary">2</button>
+
+                    <button type="button" data-value="1" class="btn btn-secondary">1</button>
+
+                    <button type="button" data-value="." class="btn btn-secondary">&bull;</button>
+
+                    <button type="button" data-value="(" class="btn btn-secondary">&lpar;</button>
+
+                    <button type="button" data-value="0" class="btn btn-secondary">0</button>
+
+                    <button type="button" data-value=")" class="btn btn-secondary">&rpar;</button>
+
+                    <button type="button" data-value="equals" class="btn btn-primary">&equals;</button>
 
                 </div>
-                <div class="calculator-buttons">
-                </div>
             </div>
-        </div>  
+        </div> 
+       <!-- end of calculator --> 
     </div>
 {% endblock %}
 

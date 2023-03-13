@@ -182,15 +182,36 @@ def calculator_view(req, budget_id):
         budget = Budget.objects.filter(id=budget_id).first()
         if budget:
             context["budget"] = budget
-            context["items"] = budget.get_item_real_costs()
+            if budget.item_set.all():
+                context["frequencies"] = budget.item_set.all().first().get_frequencies()
+            else:
+                context["frequencies"] = budget.get_budget_frequencies()
 
-        return render(req,"calculator.html", context)
-    except:
+            if req.method == "GET":
+                context["frequency"] = budget.get_frequency()
+                context["items"] = budget.get_item_costs(context["frequency"])
+                print(context["items"])
+                if context["items"]:
+                    context["amount"] = budget.get_total_costs(context["frequency"])
+                else:
+                    context["amount"] = 0
+                return render(req,"calculator.html", context)
+            
+            elif req.method == "POST":
+                context["frequency"] = req.POST.get("frequency")
+                context["items"] = budget.get_item_costs(context["frequency"])
+                if context["items"]:
+                    context["amount"] = budget.get_total_costs(context["frequency"])
+                else:
+                    context["amount"] = 0
+                
+            return render(req,"calculator.html", context)
+
+    except Exception as e:
+        print(e)
         pass
 
     return redirect("dashboard_view", id=budget_id)
-
-
 
 
 

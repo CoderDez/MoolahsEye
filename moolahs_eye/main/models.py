@@ -130,7 +130,7 @@ class Budget(models.Model):
             for item in self.item_set.all():
                 if item.frequency > self.frequency:
                     return True
-            return True
+            return False
         except:
             return False
 
@@ -150,14 +150,15 @@ class Budget(models.Model):
                         return freq[0]
         except:
             pass
-    
-    def get_frequencies(str_rep: bool = True) -> list:
-        """returns list of Budget frequency options."""
+
+    def get_frequencies(self, str_rep: bool = True, limit: bool = True):
         try:
-            if str_rep:
-                return [freq[1] for freq in Budget.frequencies]
-            else:
-                return [freq[0] for freq in Budget.frequencies]
+            freqs = []
+            for freq in Budget.frequencies:
+                if limit:
+                    if freq[0] > self.frequency:
+                        break
+                freqs.append(freq[1] if str_rep else freq[0])
         except:
             pass
 
@@ -174,12 +175,14 @@ class Budget(models.Model):
             print(e)
             return 0.0
             
-    def get_total_costs(self) -> float:
+    def get_total_costs(self, frequency_filter=None) -> float:
         """returns the total costs of all items converted to the budgets frequency."""
         try:
-            return round(sum([item.get_real_cost() for item in self.item_set.all()]), 2)
+            if not frequency_filter:
+                frequency_filter = self.frequency
+            return round(sum([item.get_item_cost(frequency_filter) for item in self.item_set.all()]), 2)
         except Exception as e:
-            print(e)
+            print("bang: ",e)
             return 0
 
     def save(self, *args, **kwargs):
@@ -196,7 +199,7 @@ class Budget(models.Model):
 
         # validate amount if primary key generated (object has been instantiated)
         if self.pk:
-            if not self.__are_items_frequency_exceeding():
+            if self.__are_items_frequency_exceeding():
                 raise mdlexc.FrequencyExceedanceException()
             if not self.__is_amount_sufficient():
                 raise mdlexc.InsufficientBudgetAmountException()
@@ -207,7 +210,7 @@ class Budget(models.Model):
             total = 0
             breakdown = {cat.name: {"cost": 0, "perc": 0} for cat in Category.objects.all()}
             for item in self.item_set.all():
-                item_cost = item.get_real_cost()
+                item_cost = item.get_item_cost()
                 total += item_cost
                 breakdown[item.category.name]["cost"] += item_cost
             
@@ -222,9 +225,10 @@ class Budget(models.Model):
                 breakdown[cat]["cost"] = round(breakdown[cat]["cost"], 2)
                 breakdown[cat]["perc"] = round((breakdown[cat]["cost"] / self.amount) * 100, 2)
             
+            print(breakdown)
             return breakdown
         except Exception as e:
-            print(e)
+            print("hmmm... ", e)
             pass
     
     def get_items_by_cost(self, desc=True):
@@ -237,7 +241,6 @@ class Budget(models.Model):
             print(e)
             pass
     
-
     def get_data_points(self):
         """Returns a dict containing important data about a budget.
         
@@ -268,14 +271,30 @@ class Budget(models.Model):
             print(e)
             return ret
     
-    def get_item_real_costs(self):
+    def get_item_costs(self, frequency_filter: Union[str, int]):
         ret = {}
         try:
-            for item in self.item_set.all():
-                ret[item.name] = round(item.get_real_cost(),2)
-        except:
+            items = sorted(
+                self.item_set.all(),
+                key = lambda i: i.get_item_cost(frequency_filter), 
+                reverse=True
+            )
+            for item in items:
+                ret[item.name] = round(item.get_item_cost(frequency_filter),2)
+        except Exception as e:
             pass
         return ret
+
+    @classmethod
+    def get_budget_frequencies(str_rep: bool = True) -> list:
+        """returns list of Budget frequency options."""
+        try:
+            if str_rep:
+                return [freq[1] for freq in Budget.frequencies]
+            else:
+                return [freq[0] for freq in Budget.frequencies]
+        except:
+            pass
 
     @classmethod
     def create_new_budget(cls, user_id: int):
@@ -345,8 +364,8 @@ class Item(models.Model):
         of all items to exceed the budget's amount."""
         try:
             other_items = self.budget_id.item_set.exclude(id=self.id)
-            costs = sum([i.get_real_cost() for i in other_items])
-            res = (self.get_real_cost() + costs) <= self.budget_id.amount
+            costs = sum([i.get_item_cost() for i in other_items])
+            res = (self.get_item_cost() + costs) <= self.budget_id.amount
             return res
         except Exception as e:
             print(e)
@@ -376,7 +395,7 @@ class Item(models.Model):
         except:
             pass
 
-    def get_frequencies(self, str_rep: bool = True, limit:bool=False) -> list:
+    def get_frequencies(self, str_rep: bool = True, limit:bool=True) -> list:
         """returns all possible item frequencies.
         
         if limit == True:
@@ -390,6 +409,7 @@ class Item(models.Model):
                     if freq[0] > self.budget_id.frequency:
                         break
                 freqs.append(freq[1] if str_rep else freq[0])
+            return freqs
         except:
             pass
 
@@ -423,7 +443,20 @@ class Item(models.Model):
             return 0
         except:
             return 0
-        
+
+    def get_bi_weekly_cost(self) -> float:
+        try:
+            if self.frequency == 1:
+                return self.cost * 14
+            elif self.frequency == 2:
+                return self.cost * 2
+            elif self.frequency == 3:
+                return self.cost
+            elif self.frequency == 4:
+                return (self.cost * 12) / 26
+        except:
+            pass
+      
     def get_monthly_cost(self) -> float:
         try:
             if self.frequency == 1:
@@ -439,34 +472,23 @@ class Item(models.Model):
         except:
             return 0
 
-    def get_real_cost(self):
+    def get_item_cost(self, frequency_filter=None):
         try:
-            ### frequencies:
-            # 1 = daily, 2 = weekly, 3 = bi-weekly, 4 = monthly
-            if self.frequency == self.budget_id.frequency:
-                return self.cost
-            else:
-                # items frequency is daily
-                if self.frequency == 1:
-                    if self.budget_id.frequency == 2: 
-                        return self.cost * 7
-                    elif self.budget_id.frequency == 3: 
-                        return self.cost * 14
-                    elif self.budget_id.frequency == 4: 
-                        return (self.cost * 365) / 12
-                
-                # items frequency is weekly
-                elif self.frequency == 2:
-                    if self.budget_id.frequency == 3:
-                        return self.cost * 2
-                    elif self.budget_id.frequency == 4: 
-                        return (self.cost * 52) / 12
-                
-                # items frequency is bi weekly
-                elif self.frequency == 3:
-                    return (self.cost * 26) / 12 
-                
-                return 0
+            if not frequency_filter:
+                frequency_filter = self.budget_id.frequency
+
+            for freq in self.frequencies:
+                if frequency_filter in freq:
+                    if freq[1] == "daily":
+                        return self.get_daily_cost()
+                    elif freq[1] == "weekly":
+                        return self.get_weekly_cost()
+                    elif freq[1] == "bi-weekly":
+                        return self.get_bi_weekly_cost()
+                    elif freq[1] == "monthly":
+                        return self.get_monthly_cost()
+                    else:
+                        return 0
         except:
             return 0
 
